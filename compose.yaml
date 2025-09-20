@@ -7,5 +7,7 @@ services:
     environment:
       - HTTP_PORT=${HTTP_PORT}
       - HTTPS_PORT=${HTTPS_PORT}
+      - RUNTIME_CERT_PATH=${RUNTIME_CERT_PATH}
+      - RUNTIME_KEY_PATH=${RUNTIME_KEY_PATH}
     volumes:
-      - ${DOCKER_HOST_CERTS_DIR:-./local/certs}:/app/certs:ro
+      - ${DOCKER_HOST_CERTS_DIR}:/app/certs:ro
