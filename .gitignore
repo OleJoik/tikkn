@@ -2,3 +2,5 @@
 .envrc
 
 .gopath/
+
+deploy.yaml
