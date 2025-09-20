@@ -1,22 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
+	"strings"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprintln(w, `<!DOCTYPE html>
-<html>
-  <head><title>Hello</title></head>
-  <body><h1>Hello from Go!</h1></body>
-</html>`)
-}
-
 func main() {
+	loadEnv(".env")
+
 	httpPort := getEnv("HTTP_PORT", "8080")
 	httpsPort := getEnv("HTTPS_PORT", "8443")
 
@@ -47,13 +42,14 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handler)
+	fs := http.FileServer(http.Dir("./static"))
+	mux.Handle("/", fs)
 
 	addr := ":" + httpsPort
 	fmt.Printf("Serving HTTPS on %s\n", addr)
 	if err := http.ListenAndServeTLS(addr,
-		mustGetEnv("CERT_PATH"),
-		mustGetEnv("KEY_PATH"),
+		getEnv("RUNTIME_CERT_PATH", "/app/certs/cert.pem"),
+		getEnv("RUNTIME_KEY_PATH", "/app/certs/privkey.pem"),
 		mux); err != nil {
 		panic(err)
 	}
@@ -66,10 +62,41 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-func mustGetEnv(key string) string {
-	value, found := os.LookupEnv(key)
-	if !found {
-		panic(fmt.Sprintf("%s is a required env var!", key))
+func loadEnv(path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		panic(err)
 	}
-	return value
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		// Skip empty lines or comments
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Split KEY=VALUE
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+
+		// Strip optional quotes
+		val = strings.Trim(val, `"'`)
+
+		os.Setenv(key, val)
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
 }
