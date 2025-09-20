@@ -10,4 +10,5 @@ services:
       - RUNTIME_CERT_PATH=${RUNTIME_CERT_PATH}
       - RUNTIME_KEY_PATH=${RUNTIME_KEY_PATH}
     volumes:
+      - ./static:/app/static:ro
       - ${DOCKER_HOST_CERTS_DIR}:/app/certs:ro
