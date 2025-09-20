@@ -1,0 +1,13 @@
+services:
+  tikkn:
+    build: .
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - HTTP_PORT=8080
+      - HTTPS_PORT=8443
+      - CERT_PATH=/app/local/certs/cert.pem
+      - KEY_PATH=/app/local/certs/privkey.pem
+    volumes:
+      - ./local/certs:/app/local/certs:ro
