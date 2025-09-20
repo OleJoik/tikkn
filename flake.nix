@@ -15,6 +15,7 @@
         buildInputs = [
           pkgs.go_1_24
           pkgs.gopls
+          pkgs.openssl
         ];
 
         shellHook = ''
