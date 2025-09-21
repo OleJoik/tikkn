@@ -42,8 +42,20 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
-	fs := http.FileServer(http.Dir("./static"))
-	mux.Handle("/", fs)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		path := "./public" + r.URL.Path
+		if info, err := os.Stat(path); err == nil && !info.IsDir() {
+			http.ServeFile(w, r, path)
+			return
+		}
+
+		if strings.Contains(r.Header.Get("Accept"), "text/html") {
+			http.ServeFile(w, r, "./public/index.html")
+			return
+		}
+
+		http.NotFound(w, r)
+	})
 
 	addr := ":" + httpsPort
 	fmt.Printf("Serving HTTPS on %s\n", addr)
