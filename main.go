@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/OleJoik/tikkn/middleware"
 )
 
 func main() {
@@ -57,12 +59,14 @@ func main() {
 		http.NotFound(w, r)
 	})
 
+	handler := middleware.Logging(mux)
+
 	addr := ":" + httpsPort
 	fmt.Printf("Serving HTTPS on %s\n", addr)
 	if err := http.ListenAndServeTLS(addr,
 		getEnv("RUNTIME_CERT_PATH", "/app/certs/cert.pem"),
 		getEnv("RUNTIME_KEY_PATH", "/app/certs/privkey.pem"),
-		mux); err != nil {
+		handler); err != nil {
 		panic(err)
 	}
 }
